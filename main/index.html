@@ -1,0 +1,173 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <!-- Plotly.js -->
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+
+<body>
+    <h1> Heart Rate Monitor </h1>
+    <p id="rate"> </p>  
+    <p id="stats"> </p> 
+    <form> <input type="button" id="startstop" value="Stop"> </form>
+    <form> <input type="button" id="raworbp" value="Raw"> </form>
+    <div id="myDiv" style="height:20%; width:70%;"> </div>
+    <form> Red LED Power &nbsp     <input type="text" id="irpower" value="100" >  </form>
+    <form> IR LED Power &nbsp &nbsp &nbsp <input type="text" id="rpower" value="180" >  </form>
+    <script>
+      setInterval(function(){ 
+          if(document.getElementById("startstop").value === "Stop"){
+                     getData();} } ,333); 
+
+      document.getElementById('raworbp').onclick = function() {
+          if(document.getElementById("raworbp").value === "Raw"){
+             document.getElementById("raworbp").value = "BP"; bporraw = 1; } else 
+           { document.getElementById("raworbp").value = "Raw"; bporraw = 0; }
+      }
+
+      document.getElementById('startstop').onclick = function() {
+          if(document.getElementById("startstop").value === "Stop"){
+             document.getElementById("startstop").value = "Start"; startstop = 1; } else 
+           { document.getElementById("startstop").value = "Stop"; startstop = 0; }
+      }
+
+      function getData() {
+         var tempstr = "irpower="+document.getElementById("irpower").value+
+                       "&xrpower="+document.getElementById("rpower").value+
+                       "&raworbp="+bporraw+"&startstop="+startstop;
+         var xhr = new XMLHttpRequest();
+         xhr.open("GET", "getData?"+tempstr, true);
+         xhr.setRequestHeader("Content-Type", "application/bin");
+         xhr.send(tempstr);
+
+         xhr.onreadystatechange = function() {
+            if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
+               var DataRet = this.responseText;
+               var DataRetArray = DataRet.split(",");
+               var lasttraceptr;
+               console.log("Start "+DataRetArray[0]);
+               lasttraceptr = traceptr;
+               var indexx;
+
+               //if we miss a packet fill in with data from last pulse shifted by heartrate
+               var skipback = 100 * 60 / valhr;
+               if(traceptr <100 || skipback <1 || skipback > 100){skipback = 1;}
+               if(isNaN(skipback)){skipback = 1;}
+               while ( tdata[traceptr - 1] + 1 < cntstart){
+                   tdata[traceptr] =  1 + tdata[traceptr-1];
+                   indexx = parseInt(traceptr - skipback);
+                   irdata[traceptr] = irdata[indexx] ;
+                   rdata[traceptr] = rdata[indexx] ;
+                   traceptr++;
+               }  
+              
+               // populate raw data arrays irdata and rdata
+               var cntsamples= DataRetArray[0];
+               var cntstart = DataRetArray[1];
+               var avgR = DataRetArray[2];
+               var avgIR = DataRetArray[3];
+               if(cntsamples >=1){
+               for(x=4;x<2*cntsamples+4;x=x+2) {
+                   tdata[traceptr] = cntstart++;
+                   irdata[traceptr] = parseInt(DataRetArray[x+0],10);
+                   rdata[traceptr] = parseInt(DataRetArray[x+1],10);
+                   traceptr++;
+               }}
+
+               //keep the plotting data sample at samples length
+               var maxsamples = 400;
+               if (tdata.length > maxsamples) {
+                   tdata.splice( 0, tdata.length-maxsamples);
+                   rdata.splice( 0, rdata.length-maxsamples);
+                   irdata.splice( 0, irdata.length-maxsamples);
+                   frdata.splice( 0, frdata.length-maxsamples);
+                   firdata.splice( 0, firdata.length-maxsamples);
+                   traceptr = maxsamples ;
+               }
+
+               //put the plotting data into plotly trace arrays
+               for(x=0; x<tdata.length; x++){
+                   trace1.x[x] = String(0.01 * tdata[x]);
+                   trace2.x[x] = String(0.01 * tdata[x]);
+                   trace1.y[x] = String(irdata[x]);
+                   trace2.y[x] = String(rdata[x]);
+               }
+
+               //statistics
+               var trigs = [];
+               var hrtrig = 200;
+               for (x=0; x<tdata.length ;x++) {
+                   if (irdata[x] < hrtrig && irdata[x+1]>= hrtrig){ trigs.push(tdata[x]); }
+               }
+               valhr = (3*100*60/(trigs[3]-trigs[0])).toFixed(0);
+
+               var rsumsq   = 0;
+               var irsumsq  = 0;
+               var statrange = trigs[3]-trigs[0]; 
+               for (x= 0; x < tdata.length; x++){ 
+                   rsumsq = rsumsq + Math.pow(rdata[x],2);
+                   irsumsq = irsumsq + Math.pow(irdata[x],2);
+               }
+               rsumsq = Math.sqrt(rsumsq / statrange);
+               irsumsq = Math.sqrt(irsumsq / statrange);
+               var rratio = ( rsumsq / avgR ); 
+               var irratio = ( irsumsq / avgIR ); 
+               var tspo2;
+               var R = rratio / irratio;
+               tspo2 = (110 - 25 * R);
+               if ( tspo2 <= 100 && tspo2 > 50 ) { spo2 = tspo2.toFixed(1); }
+
+               //interface to html exery plot update
+               document.getElementById("rate").innerHTML = 
+                      "Heart Rate = "+valhr+" bps "+" SpO2 = "+spo2+"%"; 
+               var rat = (avgIR/avgR).toFixed(3);
+               document.getElementById("stats").innerHTML = "IR DC / Red DC "+rat;
+               Plotly.newPlot('myDiv', data, layout,{responsive: true});
+            }
+         }
+      }
+
+      var x;
+      var startstop = 0;
+      var bporraw = 0;
+      var irpower = 0xd8;
+      var rpower = 0xa0;
+      var valhr = 65;
+      var spo2;
+      var irdata = [0];
+      var rdata = [0];
+      var firdata = [0];
+      var frdata = [0];
+      var tdata = [0];
+      var rxv = [1.00, 1.00, 1.00, 1.00, 1.00];
+      var ryv = [1.00, 1.00, 1.00, 1.00, 1.00];
+      var irxv = [1.00, 1.00, 1.00, 1.00, 1.00];
+      var iryv = [1.00, 1.00, 1.00, 1.00, 1.00];
+      var traceptr = 0;
+      var DataRet;
+      var trace1 = { x: [0], y: [0], mode: "lines+markers", 
+                 line: {color:'rgb(255,0,0)', size: 1 },
+                 marker: {color:'rgb(255,0,0)', size: 3 } };
+      var trace2 = { x: [0], y: [0], mode: "lines+markers", 
+                 line: {color:'rgb(0,0,255)', size: 1 },
+                 marker: {color:'rgb(0,0,255)', size: 3 } };
+
+      layout= {
+            title: { text:'Heart Rate Monitor', font: { size: 24, color: '#ffffff' } },
+            showlegend : false,
+            autosize : true,
+            //width:400, height:300,
+            margin:{ l:30, r:20, b:40, t:40, pad:4},
+            plot_bgcolor:"#aaaf",
+            paper_bgcolor:"#a00f",
+            xaxis: { title: { text: 'Time (sec)', font: { size: 18, color: '#ffffff' } },
+                     tickfont: { size:16, color:'white'}
+            }
+      }
+
+      var data = [trace1, trace2];
+
+    </script>
+</body>
+</html>
+
