@@ -1,9 +1,8 @@
-# ESP32 hosting webcite to montrol and monitor MAX30102 on a website
+# ESP32 control and monitor MAX30102 from a browser
 
-##Overview
 **This project collects data from a max30100 heart rate monitor device and presents a webpage to a connected browser displaying the real time data as well as the dsp derived Pulse Rate and Oxygen concentration results.**
 
-###Hardware Required
+Hardware Required
    1. ESP8266 module
    2. MAX30100 module
    3. Four wire interdevice connections (3.3v, gnd and I2C - sda gpio18 - scl gpio18)
