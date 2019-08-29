@@ -1,6 +1,20 @@
 <!DOCTYPE HTML>
 <html>
 <head>
+<style>
+    body {background-color: orange;}
+    h1  { text-align:center; color:red; }
+    #rate { position:absolute;top:9%;right:30%;color:blue;font-size:large; }
+    #stats { position:absolute;top:80%;left:10%;color:blue;font-size:medium; }
+    #rpower { position:absolute;top:90%;left:10%;color:green;font-size:small; }
+    #irpower { position:absolute;top:95%;left:10%;color:green;font-size:small; }
+    #rpowertext { position:absolute;top:88%;left:20%;color:green;font-size:small; }
+    #irpowertext { position:absolute;top:93%;left:20%;color:green;font-size:small; }
+    #startstop { position:absolute;top:90%;right:20%;color:red;size:5;font-size:small; }
+    #raworbp { position:absolute;top:90%;right:10%;color:red;size:5;font-size:small; }
+    #myDiv { position:absolute;top:20%;left:10%;color:green;size:10;height:60%; width:80%; }
+    input { size:3;font-size:medium;}
+</style>
   <!-- Plotly.js -->
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
@@ -11,9 +25,11 @@
     <p id="stats"> </p> 
     <form> <input type="button" id="startstop" value="Stop"> </form>
     <form> <input type="button" id="raworbp" value="Raw"> </form>
-    <div id="myDiv" style="height:20%; width:70%;"> </div>
-    <form> Red LED Power &nbsp     <input type="text" id="irpower" value="100" >  </form>
-    <form> IR LED Power &nbsp &nbsp &nbsp <input type="text" id="rpower" value="180" >  </form>
+    <div id="myDiv" > </div>
+    <p id="rpowertext">Red LED Power</p>
+    <p id="irpowertext">IR LED Power</p>
+    <form> <input id="rpower" type="number" min="0" max="255"></form>
+    <form> <input id="irpower" type="number" min="0" max="255"></form>
     <script>
       setInterval(function(){ 
           if(document.getElementById("startstop").value === "Stop"){
@@ -32,6 +48,7 @@
       }
 
       function getData() {
+         console.log(document.getElementById(irpower)+"   "+document.getElementById(rpower)); 
          var tempstr = "irpower="+document.getElementById("irpower").value+
                        "&xrpower="+document.getElementById("rpower").value+
                        "&raworbp="+bporraw+"&startstop="+startstop;
@@ -95,7 +112,7 @@
 
                //statistics
                var trigs = [];
-               var hrtrig = 200;
+               var hrtrig = 300;
                for (x=0; x<tdata.length ;x++) {
                    if (irdata[x] < hrtrig && irdata[x+1]>= hrtrig){ trigs.push(tdata[x]); }
                }
@@ -130,8 +147,6 @@
       var x;
       var startstop = 0;
       var bporraw = 0;
-      var irpower = 0xd8;
-      var rpower = 0xa0;
       var valhr = 65;
       var spo2;
       var irdata = [0];
@@ -149,8 +164,8 @@
                  line: {color:'rgb(255,0,0)', size: 1 },
                  marker: {color:'rgb(255,0,0)', size: 3 } };
       var trace2 = { x: [0], y: [0], mode: "lines+markers", 
-                 line: {color:'rgb(0,0,255)', size: 1 },
-                 marker: {color:'rgb(0,0,255)', size: 3 } };
+                 line: {color:'rgb(40,40,40)', size: 1 },
+                 marker: {color:'rgb(40,40,40)', size: 3 } };
 
       layout= {
             title: { text:'Heart Rate Monitor', font: { size: 24, color: '#ffffff' } },
@@ -166,6 +181,8 @@
       }
 
       var data = [trace1, trace2];
+      document.getElementById("irpower").value = 100;
+      document.getElementById("rpower").value = 180;
 
     </script>
 </body>
