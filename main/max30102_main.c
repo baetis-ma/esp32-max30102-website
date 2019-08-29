@@ -1,8 +1,12 @@
 #include <string.h>
 #include <stdio.h>
 
-#define I2C_ADDR                  0x57
-#define CPU_FREQ                   240
+#define I2C_ADDR               0x57 //max30102 i2c address
+#define I2C_MASTER_FREQ_HZ   500000 // max frequency of i2c clk
+#define I2C_MASTER_NUM            0 //i2c channel on ESP-WROOM-32 ESP32S
+#define I2C_MASTER_SCL_IO        19 //D19 on ESP-WROOM-32 ESP32S
+#define I2C_MASTER_SDA_IO        18 //D18 on ESP-WROOM-32 ESP32S
+
 #include "boilerplate.h"
 
 #define EXAMPLE_WIFI_SSID "troutstream"
@@ -164,7 +168,7 @@ void adc_task () {
         i2c_read(I2C_MASTER_NUM, 0x06, &rptr, 1);
         samp = ((32+wptr)-rptr)%32;
         i2c_read(I2C_MASTER_NUM, 0x07, regdata, 6*samp);
-        //ESP_LOGI("samp","----  %d %d ",  adc_read_ptr,samp);
+        ESP_LOGI("samp","----  %d %d ",  adc_read_ptr,samp);
         for(cnt = 0; cnt < samp; cnt++){
             adc_read[adc_read_ptr++] =  tcnt++;
             adc_read[adc_read_ptr++] = (256*256*(regdata[6*cnt+3]%4)+
@@ -173,7 +177,7 @@ void adc_task () {
                                         256*regdata[6*cnt+1]+regdata[6*cnt+2]);
             if(adc_read_ptr>200)adc_read_ptr=0;
         }
-        vTaskDelay(10);
+        vTaskDelay(5);
     }
 }
 
