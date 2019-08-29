@@ -17,10 +17,8 @@
 #include "driver/i2c.h"
 #include "sdkconfig.h"
 
-#define I2C_MASTER_NUM               0
-#define I2C_MASTER_SCL_IO           19
-#define I2C_MASTER_SDA_IO           18
-#define I2C_MASTER_FREQ_HZ      100000
+#define CPU_FREQ                   240
+
 #define I2C_MASTER_TX_BUF_DISABLE    0                       
 #define I2C_MASTER_RX_BUF_DISABLE    0                       
 #define WRITE_BIT     I2C_MASTER_WRITE          
