@@ -148,7 +148,21 @@ static void tcp_server_task(void *pvParameters)
     vTaskDelete(NULL);
 }
 
-void adc_task () {
+max30102_init() {
+    uint8_t data[1];
+    data[0] = ( 0x2 << 5);  //sample averaging 0=1,1=2,2=4,3=8,4=16,5+=32
+    i2c_write(I2C_MASTER_NUM, 0x08, data, 1); cycles(1);
+    data[0] = 0x03;                //mode = red and ir samples
+    i2c_write(I2C_MASTER_NUM, 0x09, data, 1);
+    data[0] = ( 0x3 << 5) + ( 0x3 << 2 ) + 0x3; //first and last 0x3, middle smap rate 0=50,1=100,etc 
+    i2c_write(I2C_MASTER_NUM, 0x0a, data, 1);
+    data[0] = 0xd0;                //ir pulse power
+    i2c_write(I2C_MASTER_NUM, 0x0c, data, 1);
+    data[0] = 0xa0;                //red pulse power
+    i2c_write(I2C_MASTER_NUM, 0x0d, data, 1);
+}
+
+void max30102_task () {
     int cnt, samp, tcnt = 0;
     uint8_t rptr, wptr;
     uint8_t data[1];
@@ -183,26 +197,17 @@ void adc_task () {
 
 void app_main()
 {
-
+    //configure esp32 memory, wifi and i2c 
     ESP_ERROR_CHECK( nvs_flash_init() );
     initialise_wifi(); cycles(1);
     wait_for_ip();
     i2c_master_init();
 
     //configure max30102 with i2c instructions
-    uint8_t data[1];
-    data[0] = ( 0x2 << 5);  //sample averaging 0=1,1=2,2=4,3=8,4=16,5+=32
-    i2c_write(I2C_MASTER_NUM, 0x08, data, 1); cycles(1);
-    data[0] = 0x03;                //mode = red and ir samples
-    i2c_write(I2C_MASTER_NUM, 0x09, data, 1);
-    data[0] = ( 0x3 << 5) + ( 0x3 << 2 ) + 0x3; //first and last 0x3, middle smap rate 0=50,1=100,etc 
-    i2c_write(I2C_MASTER_NUM, 0x0a, data, 1);
-    data[0] = 0xd0;                //ir pulse power
-    i2c_write(I2C_MASTER_NUM, 0x0c, data, 1);
-    data[0] = 0xa0;                //red pulse power
-    i2c_write(I2C_MASTER_NUM, 0x0d, data, 1);
+    max30102_init();
 
     //start tcp server and data collection tasks
     xTaskCreate(tcp_server_task, "tcp_server", 8192, NULL, 4, NULL);
-    xTaskCreate(adc_task, "adc_task", 4096, NULL, 5, NULL);
+    xTaskCreate(max30102_task, "max30102_task", 4096, NULL, 5, NULL);
 }
+

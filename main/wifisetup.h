@@ -16,12 +16,13 @@ static void initialise_wifi(void)
     ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_STA) );
     ESP_ERROR_CHECK( esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config) );
     ESP_ERROR_CHECK( esp_wifi_start() );
+    ESP_LOGI(TAG, "Set WiFi configuration SSID %s...", wifi_config.sta.ssid);
 }
 
 static void wait_for_ip()
 {
     uint32_t bits = IPV4_GOTIP_BIT;
-    //ESP_LOGI(TAG, "Waiting for AP connection...");
+    ESP_LOGI(TAG, "Waiting for AP connection...");
     xEventGroupWaitBits(wifi_event_group, bits, false, true, portMAX_DELAY);
     ESP_LOGI(TAG, "Connected to AP");
 }
