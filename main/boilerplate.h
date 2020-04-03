@@ -5,7 +5,7 @@
 #include "freertos/event_groups.h"
 #include "esp_system.h"
 #include "esp_wifi.h"
-#include "esp_event_loop.h"
+#include "esp_event.h"
 #include "esp_log.h"
 #include "nvs_flash.h"
 
@@ -29,19 +29,19 @@
 #define NACK_VAL                   0x1                  
 #define LAST_NACK_VAL              0x2  
 
-uint32_t IRAM_ATTR cycles(int reset)
-{
-    uint32_t ccount;
-    uint32_t ccount_stamp;
-    __asm__ __volatile__ ( "rsr     %0, ccount" : "=a" (ccount) );
+//uint32_t IRAM_ATTR cycles(int reset)
+//{
+//    uint32_t ccount;
+//    uint32_t ccount_stamp;
+//    __asm__ __volatile__ ( "rsr     %0, ccount" : "=a" (ccount) );
 
-    if (reset == 1){ ccount_stamp = ccount; ccount = 0; } 
-    else { ccount = ccount - ccount_stamp; } 
-    ccount = ccount / CPU_FREQ;
-    printf(" timer =  %10.3f ms\n", (float) ccount/1000);
+//    if (reset == 1){ ccount_stamp = ccount; ccount = 0; } 
+//    else { ccount = ccount - ccount_stamp; } 
+//    ccount = ccount / CPU_FREQ;
+//    printf(" timer =  %10.3f ms\n", (float) ccount/1000);
 
-    return ccount; 
-}
+//    return ccount; 
+//}
 
 /* FreeRTOS event group to signal when we are connected & ready to make a request */
 static EventGroupHandle_t wifi_event_group;

@@ -148,10 +148,10 @@ static void tcp_server_task(void *pvParameters)
     vTaskDelete(NULL);
 }
 
-max30102_init() {
+void max30102_init() {
     uint8_t data[1];
     data[0] = ( 0x2 << 5);  //sample averaging 0=1,1=2,2=4,3=8,4=16,5+=32
-    i2c_write(I2C_MASTER_NUM, 0x08, data, 1); cycles(1);
+    i2c_write(I2C_MASTER_NUM, 0x08, data, 1);
     data[0] = 0x03;                //mode = red and ir samples
     i2c_write(I2C_MASTER_NUM, 0x09, data, 1);
     data[0] = ( 0x3 << 5) + ( 0x3 << 2 ) + 0x3; //first and last 0x3, middle smap rate 0=50,1=100,etc 
@@ -199,7 +199,7 @@ void app_main()
 {
     //configure esp32 memory, wifi and i2c 
     ESP_ERROR_CHECK( nvs_flash_init() );
-    initialise_wifi(); cycles(1);
+    initialise_wifi(); 
     wait_for_ip();
     i2c_master_init();
 
