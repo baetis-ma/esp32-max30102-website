@@ -195,11 +195,12 @@ static int ssd1306_text( char *disp_string )
    //have to split up 1K framebuffer i2c write - full transfer takes 100msec (i2c 100KHz fixed)
    //otherwise oled screen wtite blocks for 100msec
    for (int a=0; a < 8; a++){
-       vTaskDelay(1); 
+       //vTaskDelay(1); 
        i2c_write( 0x3c,  0x00,  0x40);
        i2c_write_block( 0x3c, 0x40, framebuffer+a*128, 128);
    }
    free(framebuffer);
+   vTaskDelay(10); //let it finish up before relinquishing or else i2c errors
    return(0);
 }
 //each font 4 bytes SPACE=0x32

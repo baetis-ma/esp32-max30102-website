@@ -4,8 +4,7 @@
 <style>
     body {background-color: orange;}
     h1  { text-align:center; color:red; }
-    #rate { position:absolute;top:9%;right:30%;color:blue;font-size:large; }
-    #stats { position:absolute;top:80%;left:10%;color:blue;font-size:medium; }
+    #rate { position:absolute;top:5%;right:35%;color:blue;font-size:x-large; }
     #rpower { position:absolute;top:90%;left:10%;color:green;font-size:small; }
     #irpower { position:absolute;top:95%;left:10%;color:green;font-size:small; }
     #rpowertext { position:absolute;top:88%;left:20%;color:green;font-size:small; }
@@ -22,7 +21,6 @@
 <body>
     <h1> Heart Rate Monitor </h1>
     <p id="rate"> </p>  
-    <p id="stats"> </p> 
     <form> <input type="button" id="startstop" value="Stop"> </form>
     <form> <input type="button" id="raworbp" value="Raw"> </form>
     <div id="myDiv" > </div>
@@ -48,7 +46,6 @@
       }
 
       function getData() {
-         console.log(document.getElementById(irpower)+"   "+document.getElementById(rpower)); 
          var tempstr = "irpower="+document.getElementById("irpower").value+
                        "&xrpower="+document.getElementById("rpower").value+
                        "&raworbp="+bporraw+"&startstop="+startstop;
@@ -62,27 +59,14 @@
                var DataRet = this.responseText;
                var DataRetArray = DataRet.split(",");
                var lasttraceptr;
-               console.log("Start "+DataRetArray[0]);
+               console.log(" "+DataRet);
                lasttraceptr = traceptr;
-               var indexx;
-
-               //if we miss a packet fill in with data from last pulse shifted by heartrate
-               var skipback = 100 * 60 / valhr;
-               if(traceptr <100 || skipback <1 || skipback > 100){skipback = 1;}
-               if(isNaN(skipback)){skipback = 1;}
-               while ( tdata[traceptr - 1] + 1 < cntstart){
-                   tdata[traceptr] =  1 + tdata[traceptr-1];
-                   indexx = parseInt(traceptr - skipback);
-                   irdata[traceptr] = irdata[indexx] ;
-                   rdata[traceptr] = rdata[indexx] ;
-                   traceptr++;
-               }  
               
                // populate raw data arrays irdata and rdata
                var cntsamples= DataRetArray[0];
-               var cntstart = DataRetArray[1];
-               var avgR = DataRetArray[2];
-               var avgIR = DataRetArray[3];
+               //var cntstart = DataRetArray[1];
+               var heartrate = DataRetArray[2];
+               var pctspo2 = DataRetArray[3];
                if(cntsamples >=1){
                for(x=4;x<2*cntsamples+4;x=x+2) {
                    tdata[traceptr] = cntstart++;
@@ -110,54 +94,21 @@
                    trace2.y[x] = String(rdata[x]);
                }
 
-               //statistics
-               var trigs = [];
-               var hrtrig = 300;
-               for (x=0; x<tdata.length ;x++) {
-                   if (irdata[x] < hrtrig && irdata[x+1]>= hrtrig){ trigs.push(tdata[x]); }
-               }
-               valhr = (3*100*60/(trigs[3]-trigs[0])).toFixed(0);
-
-               var rsumsq   = 0;
-               var irsumsq  = 0;
-               var statrange = trigs[3]-trigs[0]; 
-               for (x= 0; x < tdata.length; x++){ 
-                   rsumsq = rsumsq + Math.pow(rdata[x],2);
-                   irsumsq = irsumsq + Math.pow(irdata[x],2);
-               }
-               rsumsq = Math.sqrt(rsumsq / statrange);
-               irsumsq = Math.sqrt(irsumsq / statrange);
-               var rratio = ( rsumsq / avgR ); 
-               var irratio = ( irsumsq / avgIR ); 
-               var tspo2;
-               var R = rratio / irratio;
-               tspo2 = (110 - 25 * R);
-               if ( tspo2 <= 100 && tspo2 > 50 ) { spo2 = tspo2.toFixed(1); }
-
                //interface to html exery plot update
                document.getElementById("rate").innerHTML = 
-                      "Heart Rate = "+valhr+" bps "+" SpO2 = "+spo2+"%"; 
-               var rat = (avgIR/avgR).toFixed(3);
-               document.getElementById("stats").innerHTML = "IR DC / Red DC "+rat;
+                      "Heart Rate = "+heartrate+" bps "+" SpO2 = "+pctspo2+"%"; 
                Plotly.newPlot('myDiv', data, layout,{responsive: true});
             }
          }
       }
-
-      var x;
+      var cntstart = 0;
       var startstop = 0;
       var bporraw = 0;
-      var valhr = 65;
-      var spo2;
       var irdata = [0];
       var rdata = [0];
       var firdata = [0];
       var frdata = [0];
       var tdata = [0];
-      var rxv = [1.00, 1.00, 1.00, 1.00, 1.00];
-      var ryv = [1.00, 1.00, 1.00, 1.00, 1.00];
-      var irxv = [1.00, 1.00, 1.00, 1.00, 1.00];
-      var iryv = [1.00, 1.00, 1.00, 1.00, 1.00];
       var traceptr = 0;
       var DataRet;
       var trace1 = { x: [0], y: [0], mode: "lines+markers", 
